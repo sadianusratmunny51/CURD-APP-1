@@ -10,7 +10,7 @@ function createTask(req, res) {
   res.status(201).json(task);
 }
 
-// Read All Tasks (with optional filtering/searching)
+// Read All Tasks (with optional filtering/searching + custom sorting)
 function getTasks(req, res) {
   let result = Task.getAllTasks();
 
@@ -19,11 +19,27 @@ function getTasks(req, res) {
     result = result.filter(t => t.status === req.query.status);
   }
 
-  // Search
-  if (req.query.search) {
+ // Search by Title
+  if (req.query.searchTitle) {
     result = result.filter(t =>
-      t.title.toLowerCase().includes(req.query.search.toLowerCase())
+      t.title.toLowerCase().includes(req.query.searchTitle.toLowerCase())
     );
+  }
+
+  // Custom Sorting by User-defined Status Priority
+  if (req.query.sortOrder) {
+    const orderArray = req.query.sortOrder.split(',').map(s => s.trim());
+
+    const priorityMap = {};
+    orderArray.forEach((status, index) => {
+      priorityMap[status] = index + 1;
+    });
+
+    result.sort((a, b) => {
+      const priorityA = priorityMap[a.status] || 999;
+      const priorityB = priorityMap[b.status] || 999;
+      return priorityA - priorityB;
+    });
   }
 
   res.json(result);
